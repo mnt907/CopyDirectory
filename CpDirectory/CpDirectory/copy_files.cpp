@@ -112,9 +112,19 @@ namespace
 
         while (feof(src_fp) == false)
         {
+<<<<<<< HEAD
             fread(file_buf, sizeof(file_buf), 1, src_fp);
             fwrite(file_buf, sizeof(file_buf), 1, dst_fp);
             strcpy(file_buf, "");
+=======
+            // fgets(file_buf, sizeof(file_buf), src_fp);
+            // fputs(file_buf, dst_fp);
+            // strcpy(file_buf, "");
+
+            fread(file_buf, sizeof(file_buf), 1, src_fp);
+            std::cout << "file_buf : " << file_buf << std::endl;
+            fwrite(file_buf, sizeof(file_buf), 1, dst_fp);
+>>>>>>> faa925a8b819fa509c3ccbb3a450a453647d4544
         }
 
         fclose(src_fp);
