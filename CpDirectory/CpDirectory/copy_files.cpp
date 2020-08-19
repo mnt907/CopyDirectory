@@ -112,8 +112,8 @@ namespace
 
         while (feof(src_fp) == false)
         {
-            fgets(file_buf, sizeof(file_buf), src_fp);
-            fputs(file_buf, dst_fp);
+            fread(file_buf, sizeof(file_buf), 1, src_fp);
+            fwrite(file_buf, sizeof(file_buf), 1, dst_fp);
             strcpy(file_buf, "");
         }
 
