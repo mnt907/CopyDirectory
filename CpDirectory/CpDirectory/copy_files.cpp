@@ -107,13 +107,37 @@ namespace
 
         fseek(src_fp, 0, SEEK_END);
         int file_size = ftell(src_fp);
-        fseek(src_fp, 0, SEEK_SET);
+        rewind(src_fp);
 
-        char* file_buf = (char*)malloc(file_size);
-        memset(file_buf, 0, file_size);
+        int file_buf_size = 256;
 
-        fread(file_buf, file_size, 1, src_fp);
-        fwrite(file_buf, file_size, 1, dst_fp);
+        char* file_buf = (char*)malloc(file_buf_size);
+        memset(file_buf, 0, file_buf_size);
+
+        int copy_number = file_size / file_buf_size;
+        int last_file_size = file_size % file_buf_size;
+
+        while ( feof(src_fp) == false)
+        {
+            if (last_file_size > 0)
+            {
+                file_buf = (char*)malloc(last_file_size);
+                memset(file_buf, 0, last_file_size);
+                fread(file_buf, last_file_size, 1, src_fp);
+                fwrite(file_buf, last_file_size, 1, dst_fp);
+                memset(file_buf, 0, last_file_size);
+            }
+            else
+            {
+                for (int i = 0; i <= copy_number; i++)
+                {
+                    memset(file_buf, 0, 256);
+                    fread(file_buf, 256, 1, src_fp);
+                    fwrite(file_buf, 256, 1, dst_fp);
+                    memset(file_buf, 0, 256);
+                }
+            }
+        }
 
         free(file_buf);
         fclose(src_fp);
@@ -137,8 +161,6 @@ namespace
 
         using namespace std;
         auto dir = fs::recursive_directory_iterator(fs::path(src_path));
-        ifstream src_file;
-        ofstream dst_file;
 
         int src_path_length = src_path.length();
         cout << src_path_length << endl;
@@ -250,6 +272,3 @@ int main()
     return 0;
 
 }
-
-//큰 파일도 복사가 되는지 확인
-//윈도우 FILE* 이용하여 코딩
