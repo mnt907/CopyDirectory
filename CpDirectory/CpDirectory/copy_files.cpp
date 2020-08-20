@@ -117,26 +117,22 @@ namespace
         int copy_number = file_size / file_buf_size;
         int last_file_size = file_size % file_buf_size;
 
-        while ( feof(src_fp) == false)
+        for (int i = 0; i < copy_number; i++)
         {
-            if (last_file_size > 0)
-            {
-                file_buf = (char*)malloc(last_file_size);
-                memset(file_buf, 0, last_file_size);
-                fread(file_buf, last_file_size, 1, src_fp);
-                fwrite(file_buf, last_file_size, 1, dst_fp);
-                memset(file_buf, 0, last_file_size);
-            }
-            else
-            {
-                for (int i = 0; i <= copy_number; i++)
-                {
-                    memset(file_buf, 0, 256);
-                    fread(file_buf, 256, 1, src_fp);
-                    fwrite(file_buf, 256, 1, dst_fp);
-                    memset(file_buf, 0, 256);
-                }
-            }
+            memset(file_buf, 0, file_buf_size);
+            fread(file_buf, file_buf_size, 1, src_fp);
+            fwrite(file_buf, file_buf_size, 1, dst_fp);
+            memset(file_buf, 0, file_buf_size);
+        }
+
+        if (last_file_size > 0)
+        {
+            free(file_buf);
+            file_buf = (char*)malloc(last_file_size);
+            memset(file_buf, 0, last_file_size);
+            fread(file_buf, last_file_size, 1, src_fp);
+            fwrite(file_buf, last_file_size, 1, dst_fp);
+            memset(file_buf, 0, last_file_size);
         }
 
         free(file_buf);
@@ -148,17 +144,7 @@ namespace
 
     bool CopyDirectory(const std::string& src_path, const std::string& dst_path)
     {
-#ifdef _WIN32        
-        //const auto copy_options = fs::copy_options::overwrite_existing
-        //    | fs::copy_options::recursive;
-        //try {
-        //    fs::copy(src_path, dst_path, copy_options);
-        //}
-        //catch (std::out_of_range& e) {
-        //    std::cout << "exception occur" << e.what() << std::endl;
-        //}
-        //return false;
-
+#ifdef _WIN32
         using namespace std;
         auto dir = fs::recursive_directory_iterator(fs::path(src_path));
 
@@ -257,17 +243,22 @@ int main()
     const std::string dst_path("/home/mnt907/study/dst");
 #endif
 
-    if (IsExistDiretory(src_path) == false)
-        return 0;
+    for (int i = 0; i < 10000; ++i)
+    {
+        if (IsExistDiretory(src_path) == false)
+            return 0;
 
-    if (IsExistDiretory(dst_path) == false)
-        return 0;
+        if (IsExistDiretory(dst_path) == false)
+            return 0;
 
-    if (IsExistFiles(src_path) == false)
-        return 0;
+        if (IsExistFiles(src_path) == false)
+            return 0;
 
-    if (CopyDirectory(src_path, dst_path) == false)
-        return 0;
+        if (CopyDirectory(src_path, dst_path) == false)
+            return 0;
+
+        Sleep(200);
+    }
 
     return 0;
 
