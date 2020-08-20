@@ -5,15 +5,14 @@
 #include <filesystem>
 #include <Windows.h>
 #include <fstream>
-#endif // _WIN32
-
-#ifdef linux
+#else
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #endif //linux
 
 namespace
@@ -90,8 +89,6 @@ namespace
         return false;
     }
 
-
-#ifdef linux
     bool CopyFiles(const std::string& src_path, const std::string& dst_path)
     {
         FILE* src_fp = NULL;
@@ -108,25 +105,26 @@ namespace
             return false;
         }
 
-        char file_buf[256] = "";
+        fseek(src_fp, 0, SEEK_END);
+        int file_size = ftell(src_fp);
+        fseek(src_fp, 0, SEEK_SET);
 
-        while (feof(src_fp) == false)
-        {
-            fread(file_buf, sizeof(file_buf), 1, src_fp);
-            fwrite(file_buf, sizeof(file_buf), 1, dst_fp);
-            strcpy(file_buf, "");
-        }
+        char* file_buf = (char*)malloc(file_size);
+        memset(file_buf, 0, file_size);
 
+        fread(file_buf, file_size, 1, src_fp);
+        fwrite(file_buf, file_size, 1, dst_fp);
+
+        free(file_buf);
         fclose(src_fp);
         fclose(dst_fp);
 
         return true;
     }
 
-#endif //linux
-
     bool CopyDirectory(const std::string& src_path, const std::string& dst_path)
     {
+#ifdef _WIN32        
         //const auto copy_options = fs::copy_options::overwrite_existing
         //    | fs::copy_options::recursive;
         //try {
@@ -137,7 +135,6 @@ namespace
         //}
         //return false;
 
-#ifdef _WIN32
         using namespace std;
         auto dir = fs::recursive_directory_iterator(fs::path(src_path));
         ifstream src_file;
@@ -160,17 +157,10 @@ namespace
             }
             else
             {
-                src_file.open(src_file_path);
-                dst_file.open(dst_file_path);
-
-                dst_file << src_file.rdbuf();
-
-                src_file.close();
-                dst_file.close();
+                CopyFiles(src_file_path, dst_file_path);
             }
         }
         return true;
-
 #else
         DIR *src_dirp = NULL;
         if ((src_dirp = opendir(src_path.c_str())) == NULL)
@@ -217,13 +207,13 @@ namespace
                     mkdir(new_dst_path.c_str(), file_info.st_mode);
                     CopyDirectory(new_src_path, new_dst_path);
                 }
-                // //dst에 디렉토리를 만들고
-                // //src랑 dst를 바꿔서 IsExistFile로 보내면 Copy하겠지?
             }
             else
             {
                 std::cout << "[file name] " << new_src_path << std::endl;
                 CopyFiles(new_src_path, new_dst_path);
+                chmod(new_dst_path.c_str(), file_info.st_mode);
+                chown(new_dst_path.c_str(), file_info.st_uid, file_info.st_gid);
             }
         }
 
@@ -260,3 +250,6 @@ int main()
     return 0;
 
 }
+
+//큰 파일도 복사가 되는지 확인
+//윈도우 FILE* 이용하여 코딩
