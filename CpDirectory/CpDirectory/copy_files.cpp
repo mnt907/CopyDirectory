@@ -88,11 +88,13 @@ namespace
 #endif
         return false;
     }
+#include <errno.h>
 
     bool CopyFiles(const std::string& src_path, const std::string& dst_path)
     {
         FILE* src_fp = NULL;
-        if ((src_fp = fopen(src_path.c_str(), "rb")) == NULL)
+        src_fp = fopen(src_path.c_str(), "rb");
+        if (src_fp == NULL)
         {
             std::cout << "can't create read_filepointer" << std::endl;
             return false;
@@ -105,8 +107,13 @@ namespace
             return false;
         }
 
-        fseek(src_fp, 0, SEEK_END);
-        int file_size = ftell(src_fp);
+        _fseeki64(src_fp, (__int64)0, SEEK_END);
+        __int64 file_size = _ftelli64(src_fp);
+        if (file_size < 0)
+        {
+            printf("can't get a file's offset. errno(%d, %s)\r\n", errno, strerror(errno));
+            return false;
+        }
         rewind(src_fp);
 
         int file_buf_size = 256;
@@ -243,23 +250,17 @@ int main()
     const std::string dst_path("/home/mnt907/study/dst");
 #endif
 
-    for (int i = 0; i < 10000; ++i)
-    {
-        if (IsExistDiretory(src_path) == false)
-            return 0;
+    if (IsExistDiretory(src_path) == false)
+        return 0;
 
-        if (IsExistDiretory(dst_path) == false)
-            return 0;
+    if (IsExistDiretory(dst_path) == false)
+        return 0;
 
-        if (IsExistFiles(src_path) == false)
-            return 0;
+    if (IsExistFiles(src_path) == false)
+        return 0;
 
-        if (CopyDirectory(src_path, dst_path) == false)
-            return 0;
-
-        Sleep(200);
-    }
+    if (CopyDirectory(src_path, dst_path) == false)
+        return 0;
 
     return 0;
-
 }
